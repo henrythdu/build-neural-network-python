@@ -1,0 +1,7 @@
+VAR a 1
+VAR b 2
+VAR c 3
+EXPR a+b-c
+GRAD a
+GRAD b
+GRAD c

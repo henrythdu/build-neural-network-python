@@ -1,0 +1,3 @@
+VAR x 2
+EXPR x*x*x
+GRAD x

@@ -1,0 +1,4 @@
+INPUT 1,2,3
+WEIGHTS 0.1,0.2,0.3
+BIAS -1
+M N 1 3

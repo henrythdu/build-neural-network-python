@@ -1,0 +1,4 @@
+INIT 1.0
+LR 0.01
+STEP 1.0
+PRINT

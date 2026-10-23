@@ -1,0 +1,6 @@
+epoch 1 loss=0.6931 acc=0.2500
+epoch 2 loss=0.6638 acc=0.7500
+epoch 3 loss=0.6410 acc=0.7500
+epoch 4 loss=0.6223 acc=0.7500
+epoch 5 loss=0.6065 acc=0.7500
+params 0.0623,0.0623,-0.4962

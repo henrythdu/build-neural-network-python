@@ -1,0 +1,5 @@
+VAR a 3
+VAR b 4
+EXPR a*b
+GRAD a
+GRAD b
