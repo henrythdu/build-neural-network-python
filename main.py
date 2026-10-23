@@ -3,8 +3,13 @@ import math
 
 
 def sigmoid(x):
-    # TODO: return 1 / (1 + e^-x), without overflowing for large |x|.
-    return 0.0
+    # TODO: return 1 / (1 + e^-x), without overflowing for large |x|.i
+    if x >= 0:
+        sig = 1 / (1 + math.e**(-x))
+    else:
+        sig = math.e**(x) / (1 + math.e**x)
+
+    return sig
 
 
 def main():
