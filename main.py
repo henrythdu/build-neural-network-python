@@ -28,7 +28,7 @@ def mae(p, t):
     return res
 
 def clam(pi):
-    return max(EPS,max(pi,min(pi,1-EPS)))
+    return max(EPS,min(pi, 1-EPS))
 
 def bce(p, t):
     res = sum([(-(ti*math.log(clam(pi)) + (1-ti)*math.log(1-clam(pi)))) for pi,ti in zip(p,t)])/len(p)
