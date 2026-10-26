@@ -13,41 +13,40 @@ def floats(s):
 def fmt(v):
     return ",".join(f4(x) for x in v)
 
-
-def sigmoid(z):
-    if z >= 0:
-        return 1.0 / (1.0 + math.exp(-z))
-    e = math.exp(z)
-    return e / (1.0 + e)
+EPS = 1e-12
 
 
-def layer(W, b, x, m, n):
-    w = [W[i:i+n] for i in range(0,len(W),n)]
-    res = []
-    for i,vals in enumerate(w):
-        sig = sigmoid(sum([math.prod(pair) for pair in zip(vals,x)]) + b[i])
-        res.append(sig)
+def mse(p, t):
+    # TODO: mean of (p - t)^2
+    res = sum([(pi-ti)**2 for pi,ti in zip(p,t)])/len(p)
+    return res
 
+
+def mae(p, t):
+    # TODO: mean of |p - t|
+    res = sum([abs(pi-ti) for pi,ti in zip(p,t)])/len(p)
+    return res
+
+def clam(pi):
+    return max(EPS,max(pi,min(pi,1-EPS)))
+
+def bce(p, t):
+    res = sum([(-(ti*math.log(clam(pi)) + (1-ti)*math.log(1-clam(pi)))) for pi,ti in zip(p,t)])/len(p)
     return res
 
 
 def main():
-    inputs = []
-    W = []
-    b = []
+    p, t, name = [], [], "mse"
     for raw in sys.stdin.read().split("\n"):
         s = raw.strip()
-        if s.startswith("INPUT "):
-            inputs.append(floats(s[6:]))
-        elif s.startswith("WEIGHTS "):
-            W = floats(s[8:])
-        elif s.startswith("BIAS "):
-            b = floats(s[5:])
-        elif s.startswith("M N "):
-            parts = s.split()
-            m, n = int(parts[2]), int(parts[3])
-            for x in inputs:
-                print(fmt(layer(W, b, x, m, n)))
+        if s.startswith("PRED "):
+            p = floats(s[5:])
+        elif s.startswith("TRUE "):
+            t = floats(s[5:])
+        elif s.startswith("LOSS "):
+            name = s[5:].strip()
+    fn = {"mse": mse, "mae": mae, "bce": bce}[name]
+    print(f4(fn(p, t)))
 
 
 main()
