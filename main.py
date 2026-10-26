@@ -13,40 +13,34 @@ def floats(s):
 def fmt(v):
     return ",".join(f4(x) for x in v)
 
-EPS = 1e-12
+
+def sigmoid(z):
+    if z >= 0:
+        return 1.0 / (1.0 + math.exp(-z))
+    e = math.exp(z)
+    return e / (1.0 + e)
 
 
-def mse(p, t):
-    # TODO: mean of (p - t)^2
-    res = sum([(pi-ti)**2 for pi,ti in zip(p,t)])/len(p)
-    return res
+def grads(x, w, b, y):
+    # TODO: forward pass for a, then delta = dL/da * da/dz,
+    # then return [delta * x_i for every input] followed by delta (the bias gradient).
+    z = sum([xi*wi for xi,wi in zip(x,w)]) + b
+    a = sigmoid(z)
+    dLda = 2*(a-y)
+    dadz = a*(1-a)
+    delta = dLda*dadz
 
+    return [delta*xi for xi in x] + [delta]
 
-def mae(p, t):
-    # TODO: mean of |p - t|
-    res = sum([abs(pi-ti) for pi,ti in zip(p,t)])/len(p)
-    return res
-
-def clam(pi):
-    return max(EPS,min(pi, 1-EPS))
-
-def bce(p, t):
-    res = sum([(-(ti*math.log(clam(pi)) + (1-ti)*math.log(1-clam(pi)))) for pi,ti in zip(p,t)])/len(p)
-    return res
 
 
 def main():
-    p, t, name = [], [], "mse"
     for raw in sys.stdin.read().split("\n"):
         s = raw.strip()
-        if s.startswith("PRED "):
-            p = floats(s[5:])
-        elif s.startswith("TRUE "):
-            t = floats(s[5:])
-        elif s.startswith("LOSS "):
-            name = s[5:].strip()
-    fn = {"mse": mse, "mae": mae, "bce": bce}[name]
-    print(f4(fn(p, t)))
+        if not s:
+            continue
+        xs, ws, bs, ys = s.split(";")
+        print(fmt(grads(floats(xs), floats(ws), float(bs), float(ys))))
 
 
 main()
