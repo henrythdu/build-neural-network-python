@@ -13,34 +13,46 @@ def floats(s):
 def fmt(v):
     return ",".join(f4(x) for x in v)
 
+def split_batch(list,batch):
+    return [list[x:x+batch] for x in range(0,len(list),batch)]
 
-def sigmoid(z):
-    if z >= 0:
-        return 1.0 / (1.0 + math.exp(-z))
-    e = math.exp(z)
-    return e / (1.0 + e)
+def train(xs, ys, lr, epochs, batch):
+
+    x_batches = split_batch(xs,batch)
+    y_batches = split_batch(ys,batch)
+    w,b = 0,0
+    for _ in range(epochs):
+        for x_batch,y_batch in zip(x_batches,y_batches):
+            m = len(x_batch)
+            dLdw = sum([2*(w*xi + b - yi)*xi for xi,yi in zip(x_batch,y_batch)])/m
+            dLdb = sum([2*(w*xi + b - yi) for xi,yi in zip(x_batch,y_batch)])/m
+            w -= dLdw*lr
+            b -= dLdb*lr
 
 
-def grads(x, w, b, y):
-    # TODO: forward pass for a, then delta = dL/da * da/dz,
-    # then return [delta * x_i for every input] followed by delta (the bias gradient).
-    z = sum([xi*wi for xi,wi in zip(x,w)]) + b
-    a = sigmoid(z)
-    dLda = 2*(a-y)
-    dadz = a*(1-a)
-    delta = dLda*dadz
-
-    return [delta*xi for xi in x] + [delta]
-
+    return w,b
 
 
 def main():
+    lr, epochs, batch = 0.1, 1, 1
+    xs, ys = [], []
     for raw in sys.stdin.read().split("\n"):
         s = raw.strip()
-        if not s:
-            continue
-        xs, ws, bs, ys = s.split(";")
-        print(fmt(grads(floats(xs), floats(ws), float(bs), float(ys))))
+        if s.startswith("LR "):
+            lr = float(s[3:])
+        elif s.startswith("EPOCHS "):
+            epochs = int(s[7:])
+        elif s.startswith("BATCH "):
+            batch = int(s[6:])
+        elif s.startswith("DATA "):
+            flat = floats(s[5:].replace(";", ","))
+            xs, ys = flat[0::2], flat[1::2]
+    w, b = train(xs, ys, lr, epochs, batch)
+    total = 0.0
+    for x, y in zip(xs, ys):
+        err = w * x + b - y
+        total += err * err
+    print(fmt([w, b, total / len(xs)]))
 
 
 main()
