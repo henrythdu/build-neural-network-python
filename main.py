@@ -13,46 +13,62 @@ def floats(s):
 def fmt(v):
     return ",".join(f4(x) for x in v)
 
-def split_batch(list,batch):
-    return [list[x:x+batch] for x in range(0,len(list),batch)]
+EPS = 1e-12
 
-def train(xs, ys, lr, epochs, batch):
+def clip(val):
+    return max(EPS,min(val, 1-EPS))
 
-    x_batches = split_batch(xs,batch)
-    y_batches = split_batch(ys,batch)
-    w,b = 0,0
+def CE(yi,ai):
+    return -(yi*math.log(ai) + (1-yi)*math.log(1-ai))
+
+def sigmoid(z):
+    if z >= 0:
+        return 1.0 / (1.0 + math.exp(-z))
+    e = math.exp(z)
+    return e / (1.0 + e)
+
+
+def train(X, y, lr, epochs):
+    # TODO: w = k zeros, b = 0. Each epoch: forward over all rows, accumulate the loss,
+    # the correct count and the averaged gradients, record loss and accuracy, then update.
+    # Return (losses, accs, w, b): per-epoch lists, then the final parameters.
+    m,k = len(X),len(X[0])
+    w,b = [0]*k,0
+    losses= []
+    accs = []
     for _ in range(epochs):
-        for x_batch,y_batch in zip(x_batches,y_batches):
-            m = len(x_batch)
-            dLdw = sum([2*(w*xi + b - yi)*xi for xi,yi in zip(x_batch,y_batch)])/m
-            dLdb = sum([2*(w*xi + b - yi) for xi,yi in zip(x_batch,y_batch)])/m
-            w -= dLdw*lr
-            b -= dLdb*lr
+        zs = [sum([wj*xi for wj,xi in zip(w,x_row)]) + b for x_row in X]
+        a = [sigmoid(z) for z in zs]
+        errors = [ai-yi for ai,yi in zip(a,y)]
+        dLdw = [sum(err*xj for err,xj in zip(errors,col))/m for col in zip(*X)]
+        dLdb = sum(errors)/m
+        w = [wj-dLdwj*lr for wj,dLdwj, in zip(w,dLdw)]
+        b -= dLdb*lr
+        accs.append(sum(1 for ai, yi in zip(a, y) if (ai >= 0.5) == yi) / m)
+        loss = sum(CE(yi,ai) for yi,ai in zip(y,a))/m
+        losses.append(loss)
 
 
-    return w,b
+    return losses, accs, w, b
 
 
 def main():
-    lr, epochs, batch = 0.1, 1, 1
-    xs, ys = [], []
+    lr, epochs = 0.1, 1
+    X, y = [], []
     for raw in sys.stdin.read().split("\n"):
         s = raw.strip()
         if s.startswith("LR "):
             lr = float(s[3:])
         elif s.startswith("EPOCHS "):
             epochs = int(s[7:])
-        elif s.startswith("BATCH "):
-            batch = int(s[6:])
         elif s.startswith("DATA "):
-            flat = floats(s[5:].replace(";", ","))
-            xs, ys = flat[0::2], flat[1::2]
-    w, b = train(xs, ys, lr, epochs, batch)
-    total = 0.0
-    for x, y in zip(xs, ys):
-        err = w * x + b - y
-        total += err * err
-    print(fmt([w, b, total / len(xs)]))
+            rows = [floats(r) for r in s[5:].split(";")]
+            X = [r[:-1] for r in rows]
+            y = [r[-1] for r in rows]
+    losses, accs, w, b = train(X, y, lr, epochs)
+    for e in range(epochs):
+        print("epoch %d loss=%s acc=%s" % (e + 1, f4(losses[e]), f4(accs[e])))
+    print("params " + fmt(w + [b]))
 
 
 main()
